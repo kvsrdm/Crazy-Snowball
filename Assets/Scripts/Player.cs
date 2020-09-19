@@ -15,8 +15,31 @@ public class Player : MonoBehaviour
     public float midLaneX;
     public float leftLaneX;
 
+    private PlayerCollision playerCollision;
+
+    private float playerScale = 1;
+
     enum Lane { LEFT, MIDDLE, RIGHT }
 
+    private void Awake()
+    {
+        playerCollision = GetComponent<PlayerCollision>();
+        playerCollision.onLevelFinished += OnLevelFinishedListener;
+        playerCollision.onScaleUp += OnScaleUp;
+        playerCollision.onScaleDown += OnScaleDown;
+    }
+
+    private void OnEnable()
+    {
+
+    }
+
+    private void OnDisable()
+    {
+        playerCollision.onLevelFinished -= OnLevelFinishedListener;
+        playerCollision.onScaleUp -= OnScaleUp;
+        playerCollision.onScaleDown -= OnScaleDown;
+    }
     void Start()
     {
         rigidBody = GetComponent<Rigidbody>();
@@ -41,16 +64,34 @@ public class Player : MonoBehaviour
         {
             transform.position = Vector3.MoveTowards(transform.position, new Vector3(transform.position.x, transform.position.y, target.position.z), step);
         }
+
+        if (transform.localScale.x < playerScale)
+        {
+            transform.localScale += Vector3.one * Time.deltaTime;
+        }
+        else
+        {
+            transform.localScale -= Vector3.one * Time.deltaTime;
+        }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnLevelFinishedListener()
     {
-        if (other.CompareTag("Finish"))
-        {
-            rigidBody.constraints = RigidbodyConstraints.FreezeAll;
-            rigidBody.angularVelocity = Vector3.zero;
-            Debug.Log("Merhaba");
-        }
+        rigidBody.constraints = RigidbodyConstraints.FreezeAll;
+        rigidBody.angularVelocity = Vector3.zero;
+        Debug.Log("Level Finished");
+    }
+
+    private void OnScaleUp(float amount)
+    {
+        playerScale += amount;
+        //transform.localScale = Vector3.one * playerScale;
+
+    }
+    private void OnScaleDown(float amount)
+    {
+        playerScale -= amount;
+        //transform.localScale = Vector3.one * playerScale;
     }
 
     public void MoveLeft()

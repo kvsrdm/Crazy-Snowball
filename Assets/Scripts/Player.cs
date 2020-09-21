@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -18,6 +20,10 @@ public class Player : MonoBehaviour
     private PlayerCollision playerCollision;
 
     private float playerScale = 1;
+    public float scaleSpeed = 2;
+
+    public int mainCount = 100;
+    public TextMeshProUGUI countText;
 
     enum Lane { LEFT, MIDDLE, RIGHT }
 
@@ -27,6 +33,7 @@ public class Player : MonoBehaviour
         playerCollision.onLevelFinished += OnLevelFinishedListener;
         playerCollision.onScaleUp += OnScaleUp;
         playerCollision.onScaleDown += OnScaleDown;
+        playerCollision.onCount += OnCount;
     }
 
     private void OnEnable()
@@ -39,11 +46,16 @@ public class Player : MonoBehaviour
         playerCollision.onLevelFinished -= OnLevelFinishedListener;
         playerCollision.onScaleUp -= OnScaleUp;
         playerCollision.onScaleDown -= OnScaleDown;
+        playerCollision.onCount -= OnCount;
     }
     void Start()
     {
         rigidBody = GetComponent<Rigidbody>();
+        SetCountText();
     }
+
+
+
     void Update()
     {
 
@@ -59,20 +71,33 @@ public class Player : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!GameManager.instance.isGameStarted)
+        {
+            return;
+        }
+
+        Debug.Log(System.Math.Round(transform.localScale.x, 1));
+
         float step = speed * Time.deltaTime;
         if (transform.position.z <= target.position.z && GameManager.instance.isGameStarted)
         {
             transform.position = Vector3.MoveTowards(transform.position, new Vector3(transform.position.x, transform.position.y, target.position.z), step);
         }
 
+
+
         if (transform.localScale.x < playerScale)
         {
-            transform.localScale += Vector3.one * Time.deltaTime;
+            transform.localScale += Vector3.one * Time.deltaTime * scaleSpeed;
         }
-        else
+
+        if (transform.localScale.x > playerScale)
         {
-            transform.localScale -= Vector3.one * Time.deltaTime;
+            transform.localScale -= Vector3.one * Time.deltaTime * scaleSpeed;
         }
+
+        transform.Rotate(Vector3.right, Space.World);
+
     }
 
     private void OnLevelFinishedListener()
@@ -85,14 +110,25 @@ public class Player : MonoBehaviour
     private void OnScaleUp(float amount)
     {
         playerScale += amount;
-        //transform.localScale = Vector3.one * playerScale;
-
     }
     private void OnScaleDown(float amount)
     {
         playerScale -= amount;
-        //transform.localScale = Vector3.one * playerScale;
     }
+
+    private void SetCountText()
+    {
+        countText.text = "Score: " + mainCount.ToString();
+    }
+
+    private void OnCount(int count)
+    {
+        mainCount += count;
+        Debug.Log("Count: " + mainCount);
+        SetCountText();
+    }
+
+    Coroutine coroutine = null;
 
     public void MoveLeft()
     {
@@ -102,19 +138,21 @@ public class Player : MonoBehaviour
         }
 
         StopAllCoroutines();
+
         if (currentLane == Lane.LEFT && transform.position.x != leftLaneX)
         {
-            StartCoroutine(MovePlayer(moveDuration, leftLaneX));
+
+            coroutine = StartCoroutine(MovePlayer(moveDuration, leftLaneX));
             currentLane = Lane.LEFT;
         }
         else if (currentLane == Lane.MIDDLE)
         {
-            StartCoroutine(MovePlayer(moveDuration, leftLaneX));
+            coroutine = StartCoroutine(MovePlayer(moveDuration, leftLaneX));
             currentLane = Lane.LEFT;
         }
         else if (currentLane == Lane.RIGHT)
         {
-            StartCoroutine(MovePlayer(moveDuration, midLaneX));
+            coroutine = StartCoroutine(MovePlayer(moveDuration, midLaneX));
             currentLane = Lane.MIDDLE;
         }
     }
@@ -125,21 +163,21 @@ public class Player : MonoBehaviour
         {
             return;
         }
-
         StopAllCoroutines();
+
         if (currentLane == Lane.LEFT)
         {
-            StartCoroutine(MovePlayer(moveDuration, midLaneX));
+            coroutine = StartCoroutine(MovePlayer(moveDuration, midLaneX));
             currentLane = Lane.MIDDLE;
         }
         else if (currentLane == Lane.MIDDLE)
         {
-            StartCoroutine(MovePlayer(moveDuration, rightLaneX));
+            coroutine = StartCoroutine(MovePlayer(moveDuration, rightLaneX));
             currentLane = Lane.RIGHT;
         }
         else if (currentLane == Lane.RIGHT && transform.position.x != rightLaneX)
         {
-            StartCoroutine(MovePlayer(moveDuration, rightLaneX));
+            coroutine = StartCoroutine(MovePlayer(moveDuration, rightLaneX));
             currentLane = Lane.RIGHT;
         }
     }
@@ -156,5 +194,4 @@ public class Player : MonoBehaviour
             yield return null;
         }
     }
-
 }

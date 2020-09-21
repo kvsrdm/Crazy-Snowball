@@ -12,6 +12,9 @@ public class PlayerCollision : MonoBehaviour
 
     public delegate void OnScaleDown(float amount);
     public OnScaleDown onScaleDown;
+    
+    public delegate void OnCount(int count);
+    public OnCount onCount;
 
     void Start()
     {
@@ -37,7 +40,6 @@ public class PlayerCollision : MonoBehaviour
         if (other.CompareTag("Finish"))
         {
             onLevelFinished();
-           
         }
     }
 
@@ -45,8 +47,10 @@ public class PlayerCollision : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Tree"))
         {
+            
             onScaleUp(0.3f);
             Destroy(other.gameObject);
+            onCount(30);
         }
     }
 
@@ -54,8 +58,10 @@ public class PlayerCollision : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Rock"))
         {
+            
             onScaleUp(0.1f);
             Destroy(other.gameObject);
+            onCount(10);
         }
     }
 
@@ -63,6 +69,7 @@ public class PlayerCollision : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Fire"))
         {
+            
             onScaleDown(0.3f);
             Destroy(other.gameObject);
         }
